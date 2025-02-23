@@ -1,4 +1,4 @@
-data_local: data_folder
+data_local: /content/examples/examples/benchmarks/bert/my-copy-c4/
 data_remote: # If blank, files must be present in data_local
 
 max_seq_len: 1024
@@ -65,7 +65,7 @@ train_loader:
   dataset:
     local: ${data_local}
     remote: ${data_remote}
-    split: train
+    split: train_small
     tokenizer_name: ${tokenizer_name}
     max_seq_len: ${max_seq_len}
     shuffle: true
@@ -83,7 +83,7 @@ eval_loader:
   dataset:
     local: ${data_local}
     remote: ${data_remote}
-    split: validation
+    split: val
     tokenizer_name: ${tokenizer_name}
     max_seq_len: ${max_seq_len}
     shuffle: false
