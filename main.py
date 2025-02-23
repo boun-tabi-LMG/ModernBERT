@@ -58,7 +58,7 @@ from torch.optim import AdamW
 import src.flex_bert as flex_bert_module
 # import src.hf_bert as hf_bert_module
 # import src.mosaic_bert as mosaic_bert_module
-# import src.text_data as text_data_module
+import src.text_data as text_data_module
 # from src.algorithms.rope_schedule import FlexBertRopeSchedule
 # from src.callbacks.dataloader_speed import DataloaderSpeedMonitor
 # from src.callbacks.log_grad_norm import LogGradNorm
