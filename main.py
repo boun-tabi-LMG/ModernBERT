@@ -61,7 +61,7 @@ import src.flex_bert as flex_bert_module
 import src.text_data as text_data_module
 # from src.algorithms.rope_schedule import FlexBertRopeSchedule
 # from src.callbacks.dataloader_speed import DataloaderSpeedMonitor
-# from src.callbacks.log_grad_norm import LogGradNorm
+from src.callbacks.log_grad_norm import LogGradNorm
 # from src.callbacks.packing_efficiency import PackingEfficency
 from src.callbacks.scheduled_gc import ScheduledGarbageCollector
 from src.scheduler import CosineInverseSqrtScheduler, OneMinusSqrtScheduler, WarmupStableDecayScheduler
