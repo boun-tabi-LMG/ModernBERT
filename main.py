@@ -16,7 +16,14 @@ from torch import nn
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+
+# Set up stdout handler with immediate flushing
+stdout_handler = logging.StreamHandler(sys.stdout)
+stdout_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+stdout_handler.setFormatter(formatter)
+stdout_handler.flush = sys.stdout.flush  # Ensure immediate flushing
+logger.addHandler(stdout_handler)
 logger.info("HEYOOOO11111")
 
 from src.bert_layers.configuration_bert import FlexBertConfig
