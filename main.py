@@ -389,6 +389,7 @@ def main(cfg: DictConfig, return_trainer: bool = False, do_train: bool = True) -
 
     # Build Model
     logger.info("Initializing model...")
+    xyz
     model = build_model(cfg.model)
     n_params = sum(p.numel() for p in model.parameters())
     logger.info(f"{n_params=:.4e}")
