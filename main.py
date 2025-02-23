@@ -48,7 +48,7 @@ from omegaconf import DictConfig, OmegaConf
 from omegaconf import OmegaConf as om
 from torch.optim import AdamW
 
-# import src.flex_bert as flex_bert_module
+import src.flex_bert as flex_bert_module
 # import src.hf_bert as hf_bert_module
 # import src.mosaic_bert as mosaic_bert_module
 # import src.text_data as text_data_module
@@ -333,6 +333,7 @@ def build_model(cfg: DictConfig):
             gradient_checkpointing=cfg.get("gradient_checkpointing", None),
         )
     elif cfg.name == "flex_bert":
+        logger.info(f"Building flex_bert model with config: {cfg}")
         return flex_bert_module.create_flex_bert_mlm(
             pretrained_model_name=cfg.pretrained_model_name,
             pretrained_checkpoint=cfg.get("pretrained_checkpoint", None),
