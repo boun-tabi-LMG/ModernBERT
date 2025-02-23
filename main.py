@@ -47,6 +47,10 @@ from src.callbacks.scheduled_gc import ScheduledGarbageCollector
 from src.scheduler import CosineInverseSqrtScheduler, OneMinusSqrtScheduler, WarmupStableDecayScheduler
 from src.sequence_packer import get_num_samples_in_packed_batch, split_packed_batch
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 def update_batch_size_info(cfg: DictConfig):
     global_batch_size, device_microbatch_size = cfg.global_train_batch_size, cfg.device_train_microbatch_size
@@ -59,8 +63,8 @@ def update_batch_size_info(cfg: DictConfig):
     device_train_batch_size = global_batch_size // dist.get_world_size()
     if isinstance(device_microbatch_size, int):
         if device_microbatch_size > device_train_batch_size:
-            print(
-                f"WARNING: device_train_microbatch_size > device_train_batch_size, "
+            logger.warning(
+                f"device_train_microbatch_size > device_train_batch_size, "
                 f"will be reduced from {device_microbatch_size} -> {device_train_batch_size}."
             )
             device_microbatch_size = device_train_batch_size
@@ -82,8 +86,8 @@ def update_batch_size_info(cfg: DictConfig):
     device_eval_batch_size = global_eval_batch_size // dist.get_world_size()
     if isinstance(device_eval_microbatch_size, int):
         if device_eval_microbatch_size > device_eval_microbatch_size:
-            print(
-                f"WARNING: device_eval_microbatch_size > device_eval_batch_size, "
+            logger.warning(
+                f"device_eval_microbatch_size > device_eval_batch_size, "
                 f"will be reduced from {device_eval_microbatch_size} -> {device_eval_batch_size}."
             )
             device_eval_microbatch_size = device_eval_batch_size
@@ -111,7 +115,7 @@ def param_groups_weight_decay(model: nn.Module, weight_decay=1e-5, no_weight_dec
 
 
 def log_config(cfg: DictConfig):
-    print(om.to_yaml(cfg))
+    logger.info(om.to_yaml(cfg))
     if "wandb" in cfg.get("loggers", {}):
         try:
             import wandb
@@ -221,8 +225,8 @@ def build_optimizer(cfg, model):
     if cfg.name == "decoupled_adamw":
         return DecoupledAdamW(params, lr=cfg.lr, betas=list(cfg.betas), eps=cfg.eps, weight_decay=cfg.weight_decay)
     elif cfg.name == "adamw":
-        print(
-            "INFO: You might want to increase the weight decay because in AdamW it is scaled by the lr."
+        logger.info(
+            "You might want to increase the weight decay because in AdamW it is scaled by the lr."
             f" Default weight decay is ``1e-2`` -> {cfg.weight_decay}. Default lr is `lr=1e-3` -> {cfg.lr}."
         )
         return AdamW(params, lr=cfg.lr, betas=list(cfg.betas), eps=cfg.eps, weight_decay=cfg.weight_decay)
@@ -235,8 +239,8 @@ def build_optimizer(cfg, model):
         except ImportError:
             raise ImportError("Install `pip install torch-optimi` to use the StableAdamW optimizer.")
 
-        print(
-            "INFO: You might want to increase the weight decay because in StableAdamW it is scaled by the lr."
+        logger.info(
+            "You might want to increase the weight decay because in StableAdamW it is scaled by the lr."
             f" Default weight decay is ``1e-2`` -> {cfg.weight_decay}. Default lr is `lr=1e-3` -> {cfg.lr}."
         )
         return StableAdamW(params, lr=cfg.lr, betas=list(cfg.betas), eps=cfg.eps, weight_decay=cfg.weight_decay)
@@ -333,7 +337,7 @@ def build_model(cfg: DictConfig):
 
 
 def init_from_checkpoint(cfg: DictConfig, new_model: nn.Module):
-    print(f"Initializing model from checkpoint {cfg.checkpoint_run_name}")
+    logger.info(f"Initializing model from checkpoint {cfg.checkpoint_run_name}")
     checkpoint_cfg = Path(cfg.checkpoint_cfg)
     assert checkpoint_cfg.exists(), f"Checkpoint config {checkpoint_cfg} does not exist"
     pretrained_cfg = om.load(checkpoint_cfg)
@@ -361,28 +365,28 @@ def init_from_checkpoint(cfg: DictConfig, new_model: nn.Module):
         new_model=new_model.model,
         mode=cfg.get("mode", "tile_weights_from_middle"),
     )
-    print(f"Initalized model from checkpoint {cfg.checkpoint_run_name} with {n_params=:.4e} parameters")
+    logger.info(f"Initalized model from checkpoint {cfg.checkpoint_run_name} with {n_params=:.4e} parameters")
 
 
 def main(cfg: DictConfig, return_trainer: bool = False, do_train: bool = True) -> Optional[Trainer]:
-    print("Training using config: ")
-    print(om.to_yaml(cfg))
+    logger.info("Training using config: ")
+    logger.info(om.to_yaml(cfg))
     reproducibility.seed_all(cfg.seed)
 
     # Get batch size info
     cfg = update_batch_size_info(cfg)
 
     # Build Model
-    print("Initializing model...")
+    logger.info("Initializing model...")
     model = build_model(cfg.model)
     n_params = sum(p.numel() for p in model.parameters())
-    print(f"{n_params=:.4e}")
+    logger.info(f"{n_params=:.4e}")
 
     if cfg.get("init_from_checkpoint", None) is not None:
         init_from_checkpoint(cfg.init_from_checkpoint, model)
 
     # Dataloaders
-    print("Building train loader...")
+    logger.info("Building train loader...")
     train_loader = build_dataloader(
         cfg=cfg.train_loader,
         tokenizer=model.tokenizer,
@@ -391,7 +395,7 @@ def main(cfg: DictConfig, return_trainer: bool = False, do_train: bool = True) -
         device_microbatch_size=cfg.device_train_microbatch_size,
     )
     if cfg.get("eval_loader", None) is not None:
-        print("Building eval loader...")
+        logger.info("Building eval loader...")
         global_eval_batch_size = cfg.get("global_eval_batch_size", cfg.global_train_batch_size)
         eval_loader = build_dataloader(
             cfg=cfg.eval_loader,
@@ -466,17 +470,17 @@ def main(cfg: DictConfig, return_trainer: bool = False, do_train: bool = True) -
         compile_config=cfg.get("compile_config", None),
     )
 
-    print("Logging config...")
+    logger.info("Logging config...")
     log_config(cfg)
 
     if do_train:
-        print("Starting training...")
+        logger.info("Starting training...")
         # this section is intended to use when resuming from a checkpoint where one wants to change
         # the learning rate and weight deacy. It's only been tested with the warmup_stable_decay scheduler
         if cfg.get("restart_override", False):
-            print("Overriding checkpoint's scheduler & optimizer LR & WD, and train microbatch size with config options")  # fmt: skip
+            logger.info("Overriding checkpoint's scheduler & optimizer LR & WD, and train microbatch size with config options")
             if cfg.scheduler.name not in ["constant_with_warmup", "warmup_stable_decay"]:
-                print("Rescaling current step LR by ratio of new LR to old LR. This may require scaling the scheduler's alpha_f")  # fmt: skip
+                logger.info("Rescaling current step LR by ratio of new LR to old LR. This may require scaling the scheduler's alpha_f")
                 for param_group in trainer.state.optimizers[0].param_groups:
                     lr_ratio = cfg.optimizer.lr / param_group["lr"]
                     param_group["lr"] = cfg.optimizer.lr
