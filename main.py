@@ -511,6 +511,9 @@ def main(cfg: DictConfig, return_trainer: bool = False, do_train: bool = True) -
 
 
 if __name__ == "__main__":
+    print("HEYOOOO")
+    print(sys.argv)
+    logger.info(f"Running with config: {sys.argv}")
     yaml_path, args_list = sys.argv[1], sys.argv[2:]
     logger.info(f"Running with config: {yaml_path} {args_list}")
     with open("yamls/defaults.yaml") as f:
