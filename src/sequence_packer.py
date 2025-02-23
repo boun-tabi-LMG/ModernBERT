@@ -63,7 +63,7 @@ class BatchSizeWarmupScheduler:
         remainder = current_token_count % self.tokens_per_batch_size
         how_many_batch_sizes = (current_token_count - remainder) // self.tokens_per_batch_size
 
-        return self.min_batch_size + how_many_batch_sizes
+        return self.min_batch_size + int(how_many_batch_sizes)
 
 
 
