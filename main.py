@@ -512,12 +512,17 @@ def main(cfg: DictConfig, return_trainer: bool = False, do_train: bool = True) -
 
 if __name__ == "__main__":
     yaml_path, args_list = sys.argv[1], sys.argv[2:]
+    logger.info(f"Running with config: {yaml_path} {args_list}")
     with open("yamls/defaults.yaml") as f:
         default_cfg = om.load(f)
+    logger.info(f"Default config: {default_cfg}")
     with open(yaml_path) as f:
         yaml_cfg = om.load(f)
+    logger.info(f"YAML config: {yaml_cfg}")
     cli_cfg = om.from_cli(args_list)
+    logger.info(f"CLI config: {cli_cfg}")
     cfg = om.merge(default_cfg, yaml_cfg, cli_cfg)
+    logger.info(f"Merged config: {cfg}")
     cfg = cast(DictConfig, cfg)  # for type checking
     logger.info(f"Running with config: {cfg}")
     main(cfg)
