@@ -519,4 +519,5 @@ if __name__ == "__main__":
     cli_cfg = om.from_cli(args_list)
     cfg = om.merge(default_cfg, yaml_cfg, cli_cfg)
     cfg = cast(DictConfig, cfg)  # for type checking
+    logger.info(f"Running with config: {cfg}")
     main(cfg)
