@@ -17,13 +17,20 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Set up stdout handler with immediate flushing
-stdout_handler = logging.StreamHandler(sys.stdout)
-stdout_handler.setLevel(logging.INFO)
+# Set up file handler with immediate flushing
+log_file = 'training.log'
+file_handler = logging.FileHandler(log_file)
+file_handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-stdout_handler.setFormatter(formatter)
-stdout_handler.flush = sys.stdout.flush  # Ensure immediate flushing
-logger.addHandler(stdout_handler)
+file_handler.setFormatter(formatter)
+# Enable immediate flushing
+logger.addHandler(file_handler)
+
+# Force flush after each log
+def force_flush(record):
+    file_handler.flush()
+    os.fsync(file_handler.stream.fileno())
+file_handler.emit = lambda record: (super(type(file_handler), file_handler).emit(record), force_flush(record))
 logger.info("HEYOOOO11111")
 
 from src.bert_layers.configuration_bert import FlexBertConfig
@@ -389,7 +396,6 @@ def main(cfg: DictConfig, return_trainer: bool = False, do_train: bool = True) -
 
     # Build Model
     logger.info("Initializing model...")
-    xyz
     model = build_model(cfg.model)
     n_params = sum(p.numel() for p in model.parameters())
     logger.info(f"{n_params=:.4e}")
